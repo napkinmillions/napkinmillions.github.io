@@ -1,0 +1,476 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}img{max-width:100%}</style>
+<title>Napkin Calculator</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Napkin Millions calculator. See what your money can become. Same math as the videos.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<style>
+/* Layout: calm fintech page. Five plain-language questions as big choice cards, then one tool: simple inputs on the left, a friendly answer card on the right. Stacks on phones. */
+:root {
+  --bg: #f3f5f2; --card: #ffffff; --soft: #eef2ee; --line: #dfe5df;
+  --ink: #1c2b36; --muted: #627180; --accent: #1f9d6b; --accent-soft: #e2f4ea; --accent-ink: #ffffff;
+  --loss: #d0533f; --loss-soft: #fbe9e5;
+  --font: "Plus Jakarta Sans", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --shadow: 0 1px 2px rgba(28,43,54,.05), 0 8px 24px rgba(28,43,54,.06);
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121a20; --card: #1a242c; --soft: #212d36; --line: #2c3a44;
+  --ink: #e8eef2; --muted: #9aa9b5; --accent: #3fc28d; --accent-soft: #1d3a30; --accent-ink: #0b1d15;
+  --loss: #f07a66; --loss-soft: #3a2420; --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.25); color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #121a20; --card: #1a242c; --soft: #212d36; --line: #2c3a44;
+  --ink: #e8eef2; --muted: #9aa9b5; --accent: #3fc28d; --accent-soft: #1d3a30; --accent-ink: #0b1d15;
+  --loss: #f07a66; --loss-soft: #3a2420; --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.25); color-scheme: dark }
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.55 var(--font); -webkit-font-smoothing: antialiased; }
+.wrap { max-width: 1080px; margin: 0 auto; padding-block: 20px 56px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 22px; }
+a { color: inherit; }
+button, a.btn { font: inherit; }
+:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 55%, transparent); outline-offset: 2px; }
+
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.brand { display: flex; align-items: center; gap: 10px; text-decoration: none; font-weight: 800; letter-spacing: .01em; }
+.brand svg { width: 36px; height: 36px; flex: none; }
+.brand span { color: var(--accent); }
+.topbtns { display: flex; gap: 8px; flex-wrap: wrap; }
+.btn { display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; padding: 10px 16px; font-weight: 700; font-size: 14px; cursor: pointer; text-decoration: none; border: 1px solid var(--line); background: var(--card); color: var(--ink); }
+.btn svg { width: 18px; height: 18px; flex: none; }
+.btn.yt { background: #e62117; border-color: #e62117; color: #fff; }
+.btn.main { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn:hover { filter: brightness(1.05); }
+
+.intro h1 { font-size: clamp(28px, 4.6vw, 44px); line-height: 1.12; margin: 0; font-weight: 800; letter-spacing: -.02em; text-wrap: balance; }
+.intro p { margin: 8px 0 0; color: var(--muted); max-width: 58ch; font-size: 17px; }
+
+.picker { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 900px) { .picker { grid-template-columns: repeat(2, minmax(0, 1fr)); } .picker a:first-child { grid-column: 1 / -1; } }
+.picker a { text-decoration: none; background: var(--card); border: 2px solid transparent; border-radius: 16px; padding: 14px 14px 12px; box-shadow: var(--shadow); display: grid; gap: 4px; align-content: start; min-width: 0; }
+.picker a .ic { font-size: 22px; line-height: 1; }
+.picker a b { font-size: 15px; line-height: 1.3; }
+.picker a small { color: var(--muted); font-size: 13px; line-height: 1.35; }
+.picker a[aria-current="page"] { border-color: var(--accent); background: var(--accent-soft); }
+
+.tool { display: grid; grid-template-columns: minmax(0, 380px) minmax(0, 1fr); gap: 18px; align-items: start; }
+@media (max-width: 860px) { .tool { grid-template-columns: minmax(0, 1fr); } }
+.panel { background: var(--card); border-radius: 20px; box-shadow: var(--shadow); padding: 20px; display: grid; gap: 18px; min-width: 0; }
+.panel h2 { margin: 0; font-size: 20px; font-weight: 800; letter-spacing: -.01em; }
+.panel .lead { margin: -10px 0 0; color: var(--muted); font-size: 14px; }
+.q { display: grid; gap: 8px; }
+.q > label, .q > .qt { font-weight: 700; font-size: 15px; display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.q > label output { font-weight: 800; color: var(--accent); font-variant-numeric: tabular-nums; font-size: 17px; white-space: nowrap; }
+.money { display: flex; align-items: center; background: var(--soft); border: 2px solid var(--soft); border-radius: 14px; padding: 0 14px; }
+.money:focus-within { border-color: var(--accent); background: var(--card); }
+.money span { color: var(--muted); font-weight: 700; }
+.money input, .q select { width: 100%; min-width: 0; border: 0; background: transparent; color: var(--ink); font: 700 20px/1 var(--font); padding: 13px 6px; outline: none; font-variant-numeric: tabular-nums; }
+.q select { background: var(--soft); border: 2px solid var(--soft); border-radius: 14px; padding: 13px 12px; font-size: 16px; }
+input[type="range"] { width: 100%; accent-color: var(--accent); height: 28px; }
+.scale { display: flex; justify-content: space-between; gap: 8px; color: var(--muted); font-size: 12px; margin-top: -6px; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chips button { border: 2px solid var(--line); background: var(--card); color: var(--ink); border-radius: 999px; padding: 8px 14px; font-weight: 600; font-size: 14px; cursor: pointer; }
+.chips button[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+
+.choice { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 12px 14px; border-radius: 14px; background: var(--soft); }
+.choice b { display: block; font-size: 15px; }
+.choice small { color: var(--muted); font-size: 13px; }
+@media (max-width: 420px) { .choice { grid-template-columns: 1fr; } }
+.seg { display: inline-flex; background: var(--card); border-radius: 999px; padding: 3px; border: 1px solid var(--line); justify-self: start; }
+.seg button { border: 0; background: transparent; color: var(--muted); font-weight: 700; font-size: 13px; padding: 7px 12px; border-radius: 999px; cursor: pointer; white-space: nowrap; }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+.seg button.bad[aria-pressed="true"] { background: var(--loss); color: #fff; }
+
+.answer { background: var(--card); border-radius: 20px; box-shadow: var(--shadow); padding: 22px; display: grid; gap: 16px; min-width: 0; }
+.answer .k { color: var(--muted); font-weight: 600; font-size: 15px; }
+.hero-num { font-size: clamp(40px, 7vw, 68px); font-weight: 800; line-height: 1; letter-spacing: -.03em; color: var(--accent); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.hero-num.loss { color: var(--loss); }
+.say { font-size: 17px; margin: 0; }
+.say b { color: var(--accent); } .say b.loss { color: var(--loss); }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.fact { background: var(--soft); border-radius: 14px; padding: 12px 14px; min-width: 0; }
+.fact .t { color: var(--muted); font-size: 13px; font-weight: 600; }
+.fact .v { font-size: 21px; font-weight: 800; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.fact .v.good { color: var(--accent); } .fact .v.loss { color: var(--loss); }
+.vs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.vs .fact .v { font-size: clamp(20px, 3.6vw, 30px); }
+.chart { width: 100%; height: auto; display: block; }
+.chart text { font-family: var(--font); font-size: 12px; fill: var(--muted); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--muted); }
+.legend i { display: inline-block; width: 12px; height: 12px; border-radius: 4px; margin-right: 6px; vertical-align: -1px; }
+.rank { display: grid; gap: 8px; }
+.rank .r { display: grid; grid-template-columns: minmax(0, 12em) minmax(0, 1fr) auto; gap: 10px; align-items: center; font-size: 14px; }
+.rank .bar { height: 12px; border-radius: 6px; background: var(--loss); min-width: 3px; }
+.rank .val { font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--loss); }
+@media (max-width: 480px) { .rank .r { grid-template-columns: minmax(0, 1fr) auto; } .rank .bar { grid-column: 1 / -1; order: 3; } }
+.tablewrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: right; padding: 9px 8px; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; }
+th { color: var(--muted); font-weight: 600; font-size: 12.5px; }
+td.loss { color: var(--loss); font-weight: 700; }
+.small { color: var(--muted); font-size: 12.5px; margin: 0; }
+.share { display: flex; gap: 8px; flex-wrap: wrap; border-top: 1px solid var(--line); padding-top: 14px; }
+
+.video { background: var(--ink); color: var(--bg); border-radius: 20px; padding: 20px 22px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; align-items: center; }
+.video b { font-size: 19px; display: block; }
+.video p { margin: 4px 0 0; opacity: .8; font-size: 14px; }
+@media (max-width: 600px) { .video { grid-template-columns: 1fr; } .video .btn { justify-self: start; } }
+
+.modal { position: fixed; inset: 0; background: rgba(10,16,22,.7); display: grid; place-items: center; z-index: 20;
+  padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
+.modal .box { background: var(--card); border-radius: 20px; padding: 18px; display: grid; gap: 12px; max-width: 400px; width: 100%; max-height: 100%; overflow: auto; }
+.modal img { width: 100%; border-radius: 12px; display: block; }
+.modal p { margin: 0; color: var(--muted); font-size: 14px; }
+.toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 999px; font-weight: 700; font-size: 14px; z-index: 30; max-width: calc(100% - 32px); }
+footer { color: var(--muted); font-size: 13px; display: grid; gap: 4px; }
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="#future" aria-label="Napkin Millions calculator">
+      <svg viewBox="0 0 36 36" aria-hidden="true"><rect x="3" y="3" width="30" height="30" rx="7" fill="#1f9d6b"/><polyline points="9,24 14,17 19,21 26,11" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div>NAPKIN <span>MILLIONS</span></div>
+    </a>
+    <div class="topbtns">
+      <a class="btn yt" href="https://www.youtube.com/@NapkinMillions" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M23 7.2a3 3 0 0 0-2.1-2.1C19 4.6 12 4.6 12 4.6s-7 0-8.9.5A3 3 0 0 0 1 7.2 31 31 0 0 0 .5 12a31 31 0 0 0 .5 4.8 3 3 0 0 0 2.1 2.1c1.9.5 8.9.5 8.9.5s7 0 8.9-.5a3 3 0 0 0 2.1-2.1 31 31 0 0 0 .5-4.8 31 31 0 0 0-.5-4.8zM9.8 15.1V8.9l5.8 3.1z"/></svg>YouTube</a>
+      <button class="btn" type="button" id="share-site"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7M16 6l-4-4-4 4M12 2v13"/></svg>Share</button>
+    </div>
+  </header>
+
+  <section class="intro">
+    <h1>What could your money become?</h1>
+    <p>Pick a question, move the sliders, get the answer. No sign-up, no ads. The same math we use in our videos.</p>
+  </section>
+
+  <nav class="picker" id="picker" aria-label="Choose a question">
+    <a href="#future"><span class="ic" aria-hidden="true">💰</span><b>How much will I have?</b><small>Your money at retirement</small></a>
+    <a href="#twins"><span class="ic" aria-hidden="true">👯</span><b>Which twin am I?</b><small>4 choices, two futures</small></a>
+    <a href="#waiting"><span class="ic" aria-hidden="true">⏳</span><b>What does waiting cost?</b><small>Starting later, in dollars</small></a>
+    <a href="#habit"><span class="ic" aria-hidden="true">☕</span><b>What does a habit cost?</b><small>Coffee, car, subscriptions</small></a>
+    <a href="#million"><span class="ic" aria-hidden="true">🎯</span><b>How do I reach $1M?</b><small>Your monthly target</small></a>
+  </nav>
+
+  <section class="tool" id="v-future">
+    <form class="panel" onsubmit="return false">
+      <h2>How much will I have?</h2>
+      <p class="lead">Already filled with an example. Change it to your numbers.</p>
+      <div class="q"><label for="f-mo">I can invest every month</label><div class="money"><span>$</span><input id="f-mo" type="number" inputmode="decimal" min="0" step="10" value="300"></div>
+        <div class="chips" data-for="f-mo"><button type="button" data-v="100">$100</button><button type="button" data-v="300">$300</button><button type="button" data-v="500">$500</button><button type="button" data-v="1000">$1,000</button></div></div>
+      <div class="q"><label for="f-age">My age now <output id="f-age-o">25</output></label><input id="f-age" type="range" min="18" max="64" value="25"></div>
+      <div class="q"><label for="f-ret">I want to retire at <output id="f-ret-o">65</output></label><input id="f-ret" type="range" min="40" max="75" value="65"></div>
+      <div class="q"><label for="f-have">I already have invested</label><div class="money"><span>$</span><input id="f-have" type="number" inputmode="decimal" min="0" step="500" value="0"></div></div>
+      <div class="q"><label for="f-r">Yearly return <output id="f-r-o">7%</output></label><input id="f-r" type="range" min="3" max="10" step="0.5" value="7">
+        <div class="scale"><span>3% careful</span><span>7% stock market average</span><span>10%</span></div></div>
+    </form>
+    <article class="answer" aria-live="polite">
+      <div class="k" id="f-k">At 65 you could have</div>
+      <div class="hero-num" id="f-big">$0</div>
+      <p class="say" id="f-say"></p>
+      <div class="facts">
+        <div class="fact"><div class="t">You put in</div><div class="v" id="f-in">$0</div></div>
+        <div class="fact"><div class="t">Growth on top</div><div class="v good" id="f-gr">$0</div></div>
+        <div class="fact"><div class="t">It could pay you, monthly</div><div class="v" id="f-inc">$0</div></div>
+      </div>
+      <svg class="chart" id="f-chart" viewBox="0 0 640 250" role="img" aria-label="Your money over time"></svg>
+      <div class="legend"><span><i style="background:var(--accent)"></i>Your money</span><span><i style="background:var(--muted)"></i>What you put in</span></div>
+      <div class="share"><button class="btn main" type="button" data-card="future">Make a picture for my story</button><button class="btn" type="button" data-copy="future">Copy my result</button></div>
+      <p class="small">Simple illustration: money added at the end of each month, steady average return. Monthly income uses the 4% rule of thumb, shown in today's money (3% inflation). Not financial advice.</p>
+    </article>
+  </section>
+
+  <section class="tool" id="v-twins" hidden>
+    <form class="panel" onsubmit="return false">
+      <h2>Which twin am I?</h2>
+      <p class="lead">From our video: Liam and Noah, same salary, very different endings. Answer for yourself.</p>
+      <div class="q"><label for="t-sal">My yearly salary</label><div class="money"><span>$</span><input id="t-sal" type="number" inputmode="numeric" min="0" step="1000" value="65000"></div></div>
+      <div class="q"><label for="t-pct">I invest this much of my pay <output id="t-pct-o">5%</output></label><input id="t-pct" type="range" min="0" max="25" step="1" value="5"></div>
+      <div class="choice"><div><b>When do I start?</b><small>Investing for retirement</small></div><div class="seg" data-key="late"><button type="button" data-v="0">Now</button><button type="button" class="bad" data-v="1">In 10 years</button></div></div>
+      <div class="choice"><div><b>My car</b><small>Used and kept, or new every few years</small></div><div class="seg" data-key="car"><button type="button" data-v="0">Used</button><button type="button" class="bad" data-v="1">New</button></div></div>
+      <div class="choice"><div><b>My credit card</b><small>A $6,000 balance at ~20%</small></div><div class="seg" data-key="debt"><button type="button" data-v="0">Paid in full</button><button type="button" class="bad" data-v="1">Balance</button></div></div>
+      <div class="choice"><div><b>Where I invest</b><small>Index fund, or an advisor at 1% a year</small></div><div class="seg" data-key="fee"><button type="button" data-v="0">Index fund</button><button type="button" class="bad" data-v="1">1% fee</button></div></div>
+    </form>
+    <article class="answer" aria-live="polite">
+      <div class="k">At 65, with your choices, you'd have</div>
+      <div class="hero-num" id="t-big">$0</div>
+      <p class="say" id="t-say"></p>
+      <div class="vs">
+        <div class="fact"><div class="t">You, as you are</div><div class="v" id="t-you">$0</div></div>
+        <div class="fact"><div class="t">You, with all smart choices</div><div class="v good" id="t-best">$0</div></div>
+      </div>
+      <svg class="chart" id="t-chart" viewBox="0 0 640 250" role="img" aria-label="Your path and the smart path"></svg>
+      <div class="legend"><span><i style="background:var(--accent)"></i>All smart choices</span><span><i style="background:var(--loss)"></i>You, as you are</span></div>
+      <div class="k" id="t-rank-k">What each choice costs you by 65</div>
+      <div class="rank" id="t-rank"></div>
+      <div class="share"><button class="btn main" type="button" data-card="twins">Make a picture for my story</button><button class="btn" type="button" data-copy="twins">Copy my result</button></div>
+      <p class="small">Age 25 to 65, 3% raises a year, 7% average return. "Used car" means $300 a month less on cars, invested. Paying the card in full means the ~$98.50 monthly interest is invested instead. "All smart choices" invests at least 10% of pay. Not financial advice.</p>
+    </article>
+  </section>
+
+  <section class="tool" id="v-waiting" hidden>
+    <form class="panel" onsubmit="return false">
+      <h2>What does waiting cost?</h2>
+      <p class="lead">Same monthly amount. The only difference is when you start.</p>
+      <div class="q"><label for="w-mo">I'd invest every month</label><div class="money"><span>$</span><input id="w-mo" type="number" inputmode="decimal" min="0" step="10" value="300"></div>
+        <div class="chips" data-for="w-mo"><button type="button" data-v="100">$100</button><button type="button" data-v="300">$300</button><button type="button" data-v="500">$500</button></div></div>
+      <div class="q"><label for="w-age">My age now <output id="w-age-o">25</output></label><input id="w-age" type="range" min="18" max="60" value="25"></div>
+      <div class="q"><label for="w-wait">If I wait <output id="w-wait-o">3 years</output></label><input id="w-wait" type="range" min="1" max="10" value="3"></div>
+    </form>
+    <article class="answer" aria-live="polite">
+      <div class="k" id="w-k">Waiting 3 years costs you</div>
+      <div class="hero-num loss" id="w-big">$0</div>
+      <p class="say" id="w-say"></p>
+      <div class="vs">
+        <div class="fact"><div class="t" id="w-now-t">Start now</div><div class="v good" id="w-now">$0</div></div>
+        <div class="fact"><div class="t" id="w-later-t">Start later</div><div class="v loss" id="w-later">$0</div></div>
+      </div>
+      <div class="tablewrap"><table><thead><tr><th>If you start at</th><th>You'd have at 65</th><th>You lose</th></tr></thead><tbody id="w-tb"></tbody></table></div>
+      <div class="share"><button class="btn main" type="button" data-card="waiting">Make a picture for my story</button><button class="btn" type="button" data-copy="waiting">Copy my result</button></div>
+      <p class="small">Retirement at 65, 7% average yearly return. Not financial advice.</p>
+    </article>
+  </section>
+
+  <section class="tool" id="v-habit" hidden>
+    <form class="panel" onsubmit="return false">
+      <h2>What does a habit cost?</h2>
+      <p class="lead">Pick one, or type your own amount.</p>
+      <div class="q"><div class="qt">Habit</div>
+        <div class="chips" id="h-chips"><button type="button" data-a="5" data-p="day">☕ Coffee $5/day</button><button type="button" data-a="15" data-p="day">🥡 Lunch out $15/day</button><button type="button" data-a="50" data-p="month">📺 Subscriptions $50/mo</button><button type="button" data-a="300" data-p="month">🚗 Newer car $300/mo</button><button type="button" data-a="100" data-p="week">🛍 Shopping $100/week</button></div></div>
+      <div class="two">
+        <div class="q"><label for="h-amt">Amount</label><div class="money"><span>$</span><input id="h-amt" type="number" inputmode="decimal" min="0" step="1" value="5"></div></div>
+        <div class="q"><label for="h-per">Every</label><select id="h-per"><option value="day">day</option><option value="week">week</option><option value="month">month</option></select></div>
+      </div>
+      <div class="q"><label for="h-yrs">For <output id="h-yrs-o">30 years</output></label><input id="h-yrs" type="range" min="1" max="45" value="30"></div>
+    </form>
+    <article class="answer" aria-live="polite">
+      <div class="k" id="h-k">Invested instead, it would grow to</div>
+      <div class="hero-num" id="h-big">$0</div>
+      <p class="say" id="h-say"></p>
+      <div class="facts">
+        <div class="fact"><div class="t">That's per month</div><div class="v" id="h-mo">$0</div></div>
+        <div class="fact"><div class="t">Total you'd spend</div><div class="v loss" id="h-sp">$0</div></div>
+      </div>
+      <svg class="chart" id="h-chart" viewBox="0 0 640 230" role="img" aria-label="Habit money over time"></svg>
+      <div class="legend"><span><i style="background:var(--accent)"></i>If invested</span><span><i style="background:var(--loss)"></i>If spent</span></div>
+      <div class="share"><button class="btn main" type="button" data-card="habit">Make a picture for my story</button><button class="btn" type="button" data-copy="habit">Copy my result</button></div>
+      <p class="small">7% average yearly return. Small habits matter less than big decisions. Enjoy what's worth it to you. Not financial advice.</p>
+    </article>
+  </section>
+
+  <section class="tool" id="v-million" hidden>
+    <form class="panel" onsubmit="return false">
+      <h2>How do I reach $1M?</h2>
+      <p class="lead">Pick a goal and an age. You'll get the monthly amount.</p>
+      <div class="q"><div class="qt">My goal</div>
+        <div class="chips" id="m-chips"><button type="button" data-v="500000">$500K</button><button type="button" data-v="1000000">$1M</button><button type="button" data-v="2000000">$2M</button></div></div>
+      <div class="q"><label for="m-age">My age now <output id="m-age-o">30</output></label><input id="m-age" type="range" min="18" max="60" value="30"></div>
+      <div class="q"><label for="m-ret">I want it by <output id="m-ret-o">65</output></label><input id="m-ret" type="range" min="40" max="75" value="65"></div>
+      <div class="q"><label for="m-have">I already have invested</label><div class="money"><span>$</span><input id="m-have" type="number" inputmode="decimal" min="0" step="1000" value="0"></div></div>
+    </form>
+    <article class="answer" aria-live="polite">
+      <div class="k" id="m-k">Invest this every month</div>
+      <div class="hero-num" id="m-big">$0</div>
+      <p class="say" id="m-say"></p>
+      <div class="facts">
+        <div class="fact"><div class="t">That's per day</div><div class="v" id="m-day">$0</div></div>
+        <div class="fact"><div class="t">If you wait 5 years</div><div class="v loss" id="m-late">$0</div></div>
+      </div>
+      <svg class="chart" id="m-chart" viewBox="0 0 640 230" role="img" aria-label="Monthly amount needed by starting age"></svg>
+      <div class="legend"><span><i style="background:var(--loss)"></i>Monthly amount needed if you start at each age</span></div>
+      <div class="share"><button class="btn main" type="button" data-card="million">Make a picture for my story</button><button class="btn" type="button" data-copy="million">Copy my result</button></div>
+      <p class="small">7% average yearly return, same amount every month. Not financial advice.</p>
+    </article>
+  </section>
+
+  <section class="video">
+    <div><b>See the math explained, step by step</b><p>Animated videos with real numbers. New ones every week.</p></div>
+    <a class="btn yt" href="https://www.youtube.com/@NapkinMillions" target="_blank" rel="noopener">▶ Watch on YouTube</a>
+  </section>
+
+  <footer>
+    <div><b>Not financial advice. Just the math.</b> Illustrations with a steady average return. Real markets go up and down, past returns are no promise, taxes are not included.</div>
+    <div>Napkin Millions · <a href="https://www.youtube.com/@NapkinMillions" target="_blank" rel="noopener">YouTube</a> · <a href="https://www.instagram.com/napkin.millions/" target="_blank" rel="noopener">Instagram</a> · <a href="https://www.tiktok.com/@napkinmillions" target="_blank" rel="noopener">TikTok</a></div>
+  </footer>
+</div>
+
+<div class="modal" id="modal" hidden role="dialog" aria-modal="true" aria-labelledby="modal-h">
+  <div class="box">
+    <b id="modal-h" style="font-size:18px">Your picture is ready</b>
+    <img id="card-img" alt="Your Napkin Millions result">
+    <p>On your phone: press and hold the picture, then Save. Post it to your story and tag @napkin.millions.</p>
+    <div class="share" style="border:0;padding:0"><a class="btn main" id="card-dl" download="my-napkin-math.png">Download</a><button class="btn" type="button" id="modal-x">Close</button></div>
+  </div>
+</div>
+<div class="toast" id="toast" hidden role="status"></div>
+
+<script>
+(() => {
+const $ = id => document.getElementById(id);
+const val = (id, d = 0) => { const v = parseFloat($(id).value); return Number.isFinite(v) && v >= 0 ? v : d; };
+const usd = v => (v < 0 ? '−' : '') + '$' + Math.round(Math.abs(v)).toLocaleString('en-US');
+const usd2 = v => '$' + v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const short = v => { const a = Math.abs(v); return a >= 1e6 ? '$' + (a / 1e6).toFixed(2).replace(/\.?0+$/, '') + 'M' : a >= 1e4 ? '$' + Math.round(a / 1e3) + 'K' : usd(a); };
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const R = 0.07, INF = 0.03, OUT = {};
+function toast(t) { const el = $('toast'); el.textContent = t; el.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => (el.hidden = true), 2000); }
+
+// same math as the videos: deposit at month end, return/12 per month
+function grow({ start = 0, monthly, years, r = R }) {
+  const i = r / 12; let bal = start, put = start; const path = [start];
+  for (let m = 0; m < Math.round(years * 12); m++) { bal = bal * (1 + i) + monthly; put += monthly; if ((m + 1) % 12 === 0) path.push(bal); }
+  return { bal, put, path };
+}
+function need(goal, have, years) { if (years <= 0) return Infinity; return Math.max(0, (goal - grow({ start: have, monthly: 0, years }).bal) / grow({ monthly: 1, years }).bal); }
+// Episode 3 twin model
+function twin({ sal, pct, late, car, debt, fee }) {
+  const ccMo = 6000 * 0.197 / 12; let bal = 0, S = sal; const path = [0];
+  for (let m = 0; m < 480; m++) {
+    const age = 25 + m / 12; if (m % 12 === 0 && m > 0) S *= 1.03;
+    const inv = age >= (late ? 35 : 25) ? pct * S / 12 + (car ? 0 : 300) + (debt ? 0 : ccMo) : 0;
+    bal = bal * (1 + (R - (fee ? 0.01 : 0)) / 12) + inv; if ((m + 1) % 12 === 0) path.push(bal);
+  }
+  return { bal, path };
+}
+
+function chart(svg, { series = [], x0, x1, xt, ymax, h = 250, xs = '' }) {
+  const W = 640, L = 56, Rr = 16, T = 12, B = 30, X = x => L + (W - L - Rr) * (x - x0) / (x1 - x0), Y = v => T + (h - T - B) * (1 - Math.min(v, ymax) / ymax);
+  const step = nice(ymax / 4); let s = '';
+  for (let v = step; v <= ymax; v += step) s += `<line x1="${L}" x2="${W - Rr}" y1="${Y(v)}" y2="${Y(v)}" stroke="${css('--line')}"/><text x="${L - 8}" y="${Y(v) + 4}" text-anchor="end">${short(v)}</text>`;
+  s += `<line x1="${L}" x2="${W - Rr}" y1="${Y(0)}" y2="${Y(0)}" stroke="${css('--muted')}"/>`;
+  xt.forEach(x => s += `<text x="${X(x)}" y="${h - 8}" text-anchor="middle">${x}${xs}</text>`);
+  for (const se of series) {
+    const c = css(se.c), pts = se.d.map(([x, v]) => X(x).toFixed(1) + ',' + Y(v).toFixed(1)).join(' ');
+    if (se.fill) s += `<polygon points="${X(se.d[0][0])},${Y(0)} ${pts} ${X(se.d.at(-1)[0])},${Y(0)}" fill="${c}" fill-opacity=".14"/>`;
+    s += `<polyline points="${pts}" fill="none" stroke="${c}" stroke-width="${se.w || 3.5}" stroke-linejoin="round" stroke-linecap="round" ${se.dash ? 'stroke-dasharray="6 6"' : ''}/>`;
+    const [lx, lv] = se.d.at(-1); s += `<circle cx="${X(lx)}" cy="${Y(lv)}" r="5" fill="${c}"/>`;
+  }
+  svg.setAttribute('viewBox', `0 0 ${W} ${h}`); svg.innerHTML = s;
+}
+function nice(x) { const p = Math.pow(10, Math.floor(Math.log10(x || 1))), f = x / p; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * p; }
+function ticks(a, b) { const st = b - a > 25 ? 10 : b - a > 10 ? 5 : 2, o = [a]; for (let x = Math.ceil((a + 1) / st) * st; x < b; x += st) if (x - o.at(-1) >= st * .6 && b - x >= st * .6) o.push(x); o.push(b); return o; }
+
+function future() {
+  const mo = val('f-mo'), age = +$('f-age').value; let ret = +$('f-ret').value; if (ret <= age) { ret = age + 1; $('f-ret').value = ret; }
+  const r = val('f-r') / 100, yrs = ret - age; $('f-age-o').textContent = age; $('f-ret-o').textContent = ret; $('f-r-o').textContent = val('f-r') + '%';
+  document.querySelectorAll('.chips[data-for="f-mo"] button').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.v === mo)));
+  const g = grow({ start: val('f-have'), monthly: mo, years: yrs, r }), inc = g.bal * 0.04 / 12 / Math.pow(1 + INF, yrs), share = g.bal ? Math.round(100 * (g.bal - g.put) / g.bal) : 0;
+  $('f-k').textContent = `At ${ret} you could have`; $('f-big').textContent = usd(g.bal); $('f-in').textContent = usd(g.put); $('f-gr').textContent = usd(g.bal - g.put); $('f-inc').textContent = usd(inc) + '/mo';
+  $('f-say').innerHTML = g.bal > 0 ? `<b>${share}%</b> of that is growth, money you never put in. Start earlier and it gets bigger.` : 'Enter a monthly amount to see your number.';
+  const put = g.path.map((_, y) => [age + y, val('f-have') + mo * 12 * y]);
+  chart($('f-chart'), { x0: age, x1: ret, xt: ticks(age, ret), ymax: Math.max(1000, g.bal * 1.08), series: [{ d: put, c: '--muted', w: 2.5, dash: true }, { d: g.path.map((v, y) => [age + y, v]), c: '--accent', fill: true }] });
+  OUT.future = { head: `MY MONEY AT ${ret}`, big: usd(g.bal), good: true, lines: [`$${mo.toLocaleString('en-US')} a month from age ${age}`, `${share}% of it is growth`, `≈ ${usd(inc)}/month in retirement`], text: `If I invest $${mo}/month from ${age}, I could have ${usd(g.bal)} at ${ret}.` };
+}
+const TW = { late: 0, car: 1, debt: 1, fee: 1 };
+function twins() {
+  const sal = val('t-sal', 65000), pct = val('t-pct') / 100; $('t-pct-o').textContent = Math.round(pct * 100) + '%';
+  document.querySelectorAll('#v-twins .seg').forEach(sg => sg.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.v === TW[sg.dataset.key]))));
+  const you = twin({ sal, pct, ...TW }), best = twin({ sal, pct: Math.max(pct, 0.10), late: 0, car: 0, debt: 0, fee: 0 });
+  const gap = best.bal - you.bal, bads = Object.values(TW).reduce((a, b) => a + b, 0) + (pct < 0.10 ? 1 : 0);
+  $('t-big').textContent = usd(you.bal); $('t-big').className = 'hero-num' + (bads >= 3 ? ' loss' : ''); $('t-you').textContent = usd(you.bal); $('t-best').textContent = usd(best.bal);
+  $('t-say').innerHTML = gap < 1 ? `You're <b>Liam</b>. Every big choice is working for you.` : bads >= 3 ? `Right now you're closer to <b class="loss">Noah</b>. The smart choices are worth <b>${usd(gap)}</b> more by 65.` : `You're halfway to <b>Liam</b>. The rest is worth <b>${usd(gap)}</b> more by 65.`;
+  chart($('t-chart'), { x0: 25, x1: 65, xt: [25, 35, 45, 55, 65], ymax: Math.max(best.bal, you.bal, 1000) * 1.08, series: [{ d: you.path.map((v, i) => [25 + i, v]), c: '--loss', w: 3 }, { d: best.path.map((v, i) => [25 + i, v]), c: '--accent', fill: true }] });
+  const names = { late: 'Starting 10 years late', car: 'New car on repeat', debt: 'Carrying card debt', fee: 'Paying a 1% fee', pct: 'Investing under 10%' };
+  const rows = []; for (const k of ['late', 'car', 'debt', 'fee']) if (TW[k]) rows.push([names[k], twin({ sal, pct, ...TW, [k]: 0 }).bal - you.bal]);
+  if (pct < 0.10) rows.push([names.pct, twin({ sal, pct: 0.10, ...TW }).bal - you.bal]);
+  rows.sort((a, b) => b[1] - a[1]); const mx = Math.max(1, ...rows.map(r => r[1]));
+  $('t-rank-k').hidden = !rows.length; $('t-rank').innerHTML = rows.map(([n, v]) => `<div class="r"><span>${n}</span><div class="bar" style="width:${(100 * v / mx).toFixed(1)}%"></div><span class="val">−${short(v)}</span></div>`).join('');
+  OUT.twins = { head: bads >= 3 ? "I'M NOAH (FOR NOW)" : 'WHICH TWIN AM I?', big: usd(you.bal), good: bads < 3, lines: [`Smart choices: ${usd(best.bal)}`, rows[0] ? `Biggest cost: ${rows[0][0].toLowerCase()}` : 'All smart choices', gap >= 1 ? `Gap: ${short(gap)}` : "I'm Liam"], text: `Same salary, two futures: me ${usd(you.bal)} vs smart choices ${usd(best.bal)} at 65.` };
+}
+function waiting() {
+  const mo = val('w-mo'), age = +$('w-age').value, w = +$('w-wait').value, yrs = 65 - age;
+  $('w-age-o').textContent = age; $('w-wait-o').textContent = w + (w > 1 ? ' years' : ' year');
+  document.querySelectorAll('.chips[data-for="w-mo"] button').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.v === mo)));
+  const now = grow({ monthly: mo, years: yrs }).bal, later = grow({ monthly: mo, years: Math.max(0, yrs - w) }).bal;
+  $('w-k').textContent = `Waiting ${w} year${w > 1 ? 's' : ''} costs you`; $('w-big').textContent = '−' + usd(now - later);
+  $('w-now-t').textContent = `Start now (${age})`; $('w-now').textContent = usd(now); $('w-later-t').textContent = `Start at ${age + w}`; $('w-later').textContent = usd(later);
+  $('w-say').innerHTML = `You'd put in <b>${usd(mo * 12 * w)}</b> less, but end up <b class="loss">${usd(now - later)}</b> poorer at 65. The early years grow the longest.`;
+  $('w-tb').innerHTML = [0, 1, 2, 3, 5, 10].filter(d => age + d < 65).map(d => { const b = grow({ monthly: mo, years: yrs - d }).bal; return `<tr><td>${age + d}${d ? '' : ' (now)'}</td><td>${usd(b)}</td><td class="${d ? 'loss' : ''}">${d ? '−' + usd(now - b) : '—'}</td></tr>`; }).join('');
+  OUT.waiting = { head: `WAITING ${w} YEARS COSTS ME`, big: '−' + usd(now - later), good: false, lines: [`$${mo.toLocaleString('en-US')} a month`, `Start now: ${usd(now)}`, `Start at ${age + w}: ${usd(later)}`], text: `Waiting ${w} years to invest $${mo}/month would cost me ${usd(now - later)} by 65.` };
+}
+const PER = { day: 365 / 12, week: 52 / 12, month: 1 };
+function habit() {
+  const a = val('h-amt'), per = $('h-per').value, yrs = +$('h-yrs').value, mo = a * PER[per]; $('h-yrs-o').textContent = yrs + (yrs > 1 ? ' years' : ' year');
+  document.querySelectorAll('#h-chips button').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.a === a && b.dataset.p === per)));
+  const g = grow({ monthly: mo, years: yrs });
+  $('h-k').textContent = `$${a.toLocaleString('en-US')} a ${per}, invested instead, would grow to`; $('h-big').textContent = usd(g.bal); $('h-mo').textContent = usd2(mo); $('h-sp').textContent = usd(g.put);
+  $('h-say').innerHTML = `That's <b>${(g.bal / Math.max(g.put, 1)).toFixed(1)}×</b> what you'd spend over ${yrs} year${yrs > 1 ? 's' : ''}.`;
+  chart($('h-chart'), { x0: 0, x1: yrs, xt: ticks(0, yrs), xs: 'y', h: 230, ymax: Math.max(100, g.bal * 1.08), series: [{ d: g.path.map((_, i) => [i, mo * 12 * i]), c: '--loss', w: 2.5, dash: true }, { d: g.path.map((v, i) => [i, v]), c: '--accent', fill: true }] });
+  OUT.habit = { head: `$${a} A ${per.toUpperCase()}, INVESTED`, big: usd(g.bal), good: true, lines: [`over ${yrs} years`, `I'd spend ${usd(g.put)}`, `${(g.bal / Math.max(g.put, 1)).toFixed(1)}× the money`], text: `$${a} a ${per} invested for ${yrs} years would grow to ${usd(g.bal)}.` };
+}
+let GOAL = 1000000;
+function million() {
+  const age = +$('m-age').value; let ret = +$('m-ret').value; if (ret <= age + 1) { ret = age + 2; $('m-ret').value = ret; }
+  const have = val('m-have'), yrs = ret - age; $('m-age-o').textContent = age; $('m-ret-o').textContent = ret;
+  document.querySelectorAll('#m-chips button').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.v === GOAL)));
+  const n = need(GOAL, have, yrs), late = need(GOAL, have, yrs - 5);
+  $('m-k').textContent = `To have ${short(GOAL)} by ${ret}, invest every month`; $('m-big').textContent = usd(n);
+  $('m-day').textContent = usd2(n * 12 / 365); $('m-late').textContent = yrs > 5 ? usd(late) + '/mo' : '—';
+  $('m-say').innerHTML = n === 0 ? 'What you already have gets you there. Keep it invested.' : `Start at ${age} and you need <b>${usd(n)}</b> a month. Every year you wait makes it more.`;
+  const end = Math.max(age + 1, ret - 5), pts = []; for (let a = age; a <= end; a++) pts.push([a, need(GOAL, have, ret - a)]);
+  chart($('m-chart'), { x0: age, x1: end, xt: ticks(age, end), h: 230, ymax: Math.max(10, ...pts.map(p => p[1])) * 1.1, series: [{ d: pts, c: '--loss' }] });
+  OUT.million = { head: `MY PATH TO ${short(GOAL)}`, big: usd(n) + '/mo', good: true, lines: [`from ${age} to ${ret}`, `≈ ${usd2(n * 12 / 365)} a day`, yrs > 5 ? `Wait 5 years: ${usd(late)}/mo` : ''], text: `To reach ${usd(GOAL)} by ${ret}, I need to invest ${usd(n)} a month starting at ${age}.` };
+}
+
+const V = { future, twins, waiting, habit, million };
+for (const k in V) document.querySelectorAll(`#v-${k} input, #v-${k} select`).forEach(el => el.addEventListener('input', V[k]));
+document.querySelectorAll('.chips[data-for]').forEach(c => c.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; $(c.dataset.for).value = b.dataset.v; $(c.dataset.for).dispatchEvent(new Event('input')); }));
+$('h-chips').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; $('h-amt').value = b.dataset.a; $('h-per').value = b.dataset.p; habit(); });
+$('m-chips').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; GOAL = +b.dataset.v; million(); });
+document.querySelectorAll('#v-twins .seg').forEach(sg => sg.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; TW[sg.dataset.key] = +b.dataset.v; twins(); }));
+function route() {
+  let k = location.hash.slice(1); if (!V[k]) k = 'future';
+  for (const v in V) $('v-' + v).hidden = v !== k;
+  document.querySelectorAll('#picker a').forEach(a => a.getAttribute('href') === '#' + k ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current'));
+  V[k]();
+}
+addEventListener('hashchange', route); Object.values(V).forEach(f => f()); route();
+try { matchMedia('(prefers-color-scheme: dark)').addEventListener('change', route); } catch (e) {}
+new MutationObserver(route).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+const SITE_TEXT = 'See what your money could become. Free calculator from Napkin Millions:';
+$('share-site').addEventListener('click', async () => {
+  const url = location.href.split('#')[0];
+  try { if (navigator.share) { await navigator.share({ title: 'Napkin Calculator', text: SITE_TEXT, url }); return; } } catch (e) { if (e && e.name === 'AbortError') return; }
+  try { await navigator.clipboard.writeText(SITE_TEXT + ' ' + url); toast('Link copied. Paste it anywhere'); } catch (e) { toast(url); }
+});
+document.querySelectorAll('[data-copy]').forEach(b => b.addEventListener('click', async () => {
+  const t = OUT[b.dataset.copy].text + ' Try yours: ' + location.href.split('#')[0];
+  try { await navigator.clipboard.writeText(t); toast('Copied'); } catch (e) { toast('Copy did not work in this browser'); }
+}));
+
+async function card(k) {
+  const o = OUT[k]; try { await document.fonts.ready; } catch (e) {}
+  const c = document.createElement('canvas'); c.width = 1080; c.height = 1920; const x = c.getContext('2d'), F = '"Plus Jakarta Sans", Arial, sans-serif';
+  const rr = (X, Y, w, h, r) => { x.beginPath(); x.moveTo(X + r, Y); x.arcTo(X + w, Y, X + w, Y + h, r); x.arcTo(X + w, Y + h, X, Y + h, r); x.arcTo(X, Y + h, X, Y, r); x.arcTo(X, Y, X + w, Y, r); x.closePath(); };
+  x.fillStyle = '#f3f5f2'; x.fillRect(0, 0, 1080, 1920);
+  x.fillStyle = '#1f9d6b'; rr(440, 180, 200, 200, 44); x.fill();
+  x.strokeStyle = '#fff'; x.lineWidth = 18; x.lineCap = 'round'; x.lineJoin = 'round'; x.beginPath(); x.moveTo(490, 320); x.lineTo(525, 270); x.lineTo(560, 300); x.lineTo(600, 235); x.stroke();
+  x.fillStyle = '#ffffff'; x.shadowColor = 'rgba(28,43,54,.12)'; x.shadowBlur = 50; x.shadowOffsetY = 16; rr(90, 470, 900, 960, 48); x.fill(); x.shadowColor = 'transparent';
+  x.textAlign = 'center'; x.fillStyle = '#627180'; x.font = `700 40px ${F}`; x.fillText(o.head, 540, 590);
+  let fs = 150; x.font = `800 ${fs}px ${F}`; while (x.measureText(o.big).width > 800 && fs > 60) { fs -= 6; x.font = `800 ${fs}px ${F}`; }
+  x.fillStyle = o.good ? '#1f9d6b' : '#d0533f'; x.fillText(o.big, 540, 780);
+  o.lines.filter(Boolean).forEach((l, i) => { x.fillStyle = '#eef2ee'; rr(160, 880 + i * 150, 760, 116, 28); x.fill(); x.fillStyle = '#1c2b36'; let f = 46; x.font = `700 ${f}px ${F}`; while (x.measureText(l).width > 700 && f > 28) { f -= 2; x.font = `700 ${f}px ${F}`; } x.fillText(l, 540, 954 + i * 150); });
+  x.fillStyle = '#1c2b36'; x.font = `800 64px ${F}`; x.fillText('NAPKIN MILLIONS', 540, 1590);
+  x.fillStyle = '#1f9d6b'; x.font = `700 44px ${F}`; x.fillText('Do your own math · link in bio', 540, 1670);
+  x.fillStyle = '#627180'; x.font = `500 32px ${F}`; x.fillText('Not financial advice. Just the math.', 540, 1760);
+  const url = c.toDataURL('image/png'); $('card-img').src = url; $('card-dl').href = url; $('modal').hidden = false; $('modal-x').focus();
+}
+document.querySelectorAll('[data-card]').forEach(b => b.addEventListener('click', () => card(b.dataset.card)));
+$('modal-x').addEventListener('click', () => ($('modal').hidden = true));
+$('modal').addEventListener('click', e => { if (e.target.id === 'modal') $('modal').hidden = true; });
+addEventListener('keydown', e => { if (e.key === 'Escape') $('modal').hidden = true; });
+window.__check = () => [Math.round(twin({ sal: 65000, pct: .10, late: 0, car: 0, debt: 0, fee: 0 }).bal), Math.round(twin({ sal: 65000, pct: .05, late: 1, car: 1, debt: 1, fee: 1 }).bal), $('f-big').textContent];
+})();
+</script>
+
+</body>
+</html>
