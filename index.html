@@ -15,7 +15,7 @@
 :root {
   --bg: #f3f5f2; --card: #ffffff; --soft: #eef2ee; --line: #dfe5df;
   --ink: #1c2b36; --muted: #627180; --accent: #1f9d6b; --accent-soft: #e2f4ea; --accent-ink: #ffffff;
-  --loss: #d0533f; --loss-soft: #fbe9e5;
+  --loss: #d0533f; --loss-soft: #fbe9e5; --buy: #d8952a;
   --font: "Plus Jakarta Sans", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --shadow: 0 1px 2px rgba(28,43,54,.05), 0 8px 24px rgba(28,43,54,.06);
 }
@@ -51,8 +51,8 @@ button, a.btn { font: inherit; }
 .intro h1 { font-size: clamp(28px, 4.6vw, 44px); line-height: 1.12; margin: 0; font-weight: 800; letter-spacing: -.02em; text-wrap: balance; }
 .intro p { margin: 8px 0 0; color: var(--muted); max-width: 58ch; font-size: 17px; }
 
-.picker { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
-@media (max-width: 900px) { .picker { grid-template-columns: repeat(2, minmax(0, 1fr)); } .picker a:first-child { grid-column: 1 / -1; } }
+.picker { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 900px) { .picker { grid-template-columns: repeat(2, minmax(0, 1fr)); }  }
 .picker a { text-decoration: none; background: var(--card); border: 2px solid transparent; border-radius: 16px; padding: 14px 14px 12px; box-shadow: var(--shadow); display: grid; gap: 4px; align-content: start; min-width: 0; }
 .picker a .ic { font-size: 22px; line-height: 1; }
 .picker a b { font-size: 15px; line-height: 1.3; }
@@ -158,6 +158,7 @@ footer { color: var(--muted); font-size: 13px; display: grid; gap: 4px; }
     <a href="#waiting"><span class="ic" aria-hidden="true">⏳</span><b>What does waiting cost?</b><small>Starting later, in dollars</small></a>
     <a href="#habit"><span class="ic" aria-hidden="true">☕</span><b>What does a habit cost?</b><small>Coffee, car, subscriptions</small></a>
     <a href="#million"><span class="ic" aria-hidden="true">🎯</span><b>How do I reach $1M?</b><small>Your monthly target</small></a>
+    <a href="#rent"><span class="ic" aria-hidden="true">🏠</span><b>Rent or buy?</b><small>Who's richer later</small></a>
   </nav>
 
   <section class="tool" id="v-future">
@@ -291,6 +292,37 @@ footer { color: var(--muted); font-size: 13px; display: grid; gap: 4px; }
     </article>
   </section>
 
+  <section class="tool" id="v-rent" hidden>
+    <form class="panel" onsubmit="return false">
+      <h2>Rent or buy?</h2>
+      <p class="lead">From our video: Mia buys, Jake rents. Filled with US averages. Change them to yours.</p>
+      <div class="q"><label for="r-price">Home price</label><div class="money"><span>$</span><input id="r-price" type="number" inputmode="numeric" min="0" step="5000" value="417500"></div></div>
+      <div class="q"><label for="r-rent">Rent for a similar home, per month</label><div class="money"><span>$</span><input id="r-rent" type="number" inputmode="numeric" min="0" step="50" value="2200"></div></div>
+      <div class="q"><label for="r-rate">Mortgage rate <output id="r-rate-o">7.24%</output></label><input id="r-rate" type="range" min="3" max="9" step="0.01" value="7.24"></div>
+      <div class="q"><label for="r-down">Down payment <output id="r-down-o">10%</output></label><input id="r-down" type="range" min="3" max="40" step="1" value="10"></div>
+      <div class="q"><label for="r-yrs">I'd stay this long <output id="r-yrs-o">30 years</output></label><input id="r-yrs" type="range" min="2" max="30" step="1" value="30"></div>
+      <div class="choice"><div><b>If I rent, I invest the difference</b><small>Every month, automatically</small></div><div class="seg" id="r-inv"><button type="button" data-v="1">Yes</button><button type="button" class="bad" data-v="0">No, I'd spend it</button></div></div>
+    </form>
+    <article class="answer" aria-live="polite">
+      <div class="k" id="r-k">After 30 years</div>
+      <div class="hero-num" id="r-big">$0</div>
+      <p class="say" id="r-say"></p>
+      <div class="vs">
+        <div class="fact"><div class="t">If you buy (sell, pay off loan)</div><div class="v" id="r-buy">$0</div></div>
+        <div class="fact"><div class="t">If you rent and invest</div><div class="v" id="r-rentv">$0</div></div>
+      </div>
+      <svg class="chart" id="r-chart" viewBox="0 0 640 250" role="img" aria-label="Buying and renting over time"></svg>
+      <div class="legend"><span><i style="background:var(--buy)"></i>Buy: home equity if sold</span><span><i style="background:var(--accent)"></i>Rent: investments</span></div>
+      <div class="facts">
+        <div class="fact"><div class="t">Owning costs, first month</div><div class="v" id="r-own">$0</div></div>
+        <div class="fact"><div class="t">Rent, first month</div><div class="v" id="r-rent0">$0</div></div>
+        <div class="fact"><div class="t">Buying wins if rent is above</div><div class="v" id="r-be">$0</div></div>
+      </div>
+      <div class="share"><button class="btn main" type="button" data-card="rent">Make a picture for my story</button><button class="btn" type="button" data-copy="rent">Copy my result</button></div>
+      <p class="small">Assumptions: closing costs 3%, selling costs 6%, property tax 1.1%, insurance 0.6% and repairs 1% of the home value a year, mortgage insurance 0.6% until 20% equity, 30-year fixed loan. Home value +3.5% a year, rent +3% a year, investments 7% a year. Before taxes. Not financial advice.</p>
+    </article>
+  </section>
+
   <section class="video">
     <div><b>See the math explained, step by step</b><p>Animated videos with real numbers. New ones every week.</p></div>
     <a class="btn yt" href="https://www.youtube.com/@NapkinMillions" target="_blank" rel="noopener">▶ Watch on YouTube</a>
@@ -406,6 +438,40 @@ function habit() {
   chart($('h-chart'), { x0: 0, x1: yrs, xt: ticks(0, yrs), xs: 'y', h: 230, ymax: Math.max(100, g.bal * 1.08), series: [{ d: g.path.map((_, i) => [i, mo * 12 * i]), c: '--loss', w: 2.5, dash: true }, { d: g.path.map((v, i) => [i, v]), c: '--accent', fill: true }] });
   OUT.habit = { head: `$${a} A ${per.toUpperCase()}, INVESTED`, big: usd(g.bal), good: true, lines: [`over ${yrs} years`, `I'd spend ${usd(g.put)}`, `${(g.bal / Math.max(g.put, 1)).toFixed(1)}× the money`], text: `$${a} a ${per} invested for ${yrs} years would grow to ${usd(g.bal)}.` };
 }
+// rent vs buy (Episode 4 model)
+let RINV = 1;
+function rvb({ price, rent0, rate, down, years, inv }) {
+  const loan = price * (1 - down), i = rate / 12, n = 360, pmt = i ? loan * i / (1 - Math.pow(1 + i, -n)) : loan / n;
+  let port = inv ? price * (down + 0.03) : 0, val = price, bal = loan, rent = rent0, first = null; const P = [[0, price * 0.94 - loan, port]];
+  for (let m = 0; m < years * 12; m++) {
+    if (m % 12 === 0 && m > 0) rent *= 1.03;
+    const intr = bal * i; bal = Math.max(0, bal - (pmt - intr));
+    const own = (m < n ? pmt : 0) + val * 0.027 / 12 + (bal > 0.8 * val ? loan * 0.006 / 12 : 0);
+    if (first === null) first = own;
+    port = port * (1 + 0.07 / 12) + (inv ? own - rent : 0); val *= Math.pow(1.035, 1 / 12);
+    if ((m + 1) % 12 === 0) P.push([(m + 1) / 12, val * 0.94 - bal, port]);
+  }
+  return { eq: val * 0.94 - bal, port, first, P };
+}
+function rentbuy() {
+  const price = val('r-price', 417500), rent0 = val('r-rent', 2200), rate = val('r-rate') / 100, down = val('r-down') / 100, years = +$('r-yrs').value;
+  $('r-rate-o').textContent = val('r-rate') + '%'; $('r-down-o').textContent = val('r-down') + '%'; $('r-yrs-o').textContent = years + (years > 1 ? ' years' : ' year');
+  $('r-inv').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.v === RINV)));
+  const r = rvb({ price, rent0, rate, down, years, inv: RINV });
+  const buyWins = r.eq >= r.port, gap = Math.abs(r.eq - r.port);
+  $('r-k').textContent = `After ${years} year${years > 1 ? 's' : ''}, ${buyWins ? 'buying' : 'renting'} comes out ahead by`;
+  $('r-big').textContent = usd(gap); $('r-big').className = 'hero-num';
+  $('r-buy').textContent = usd(r.eq); $('r-rentv').textContent = usd(r.port);
+  $('r-buy').className = 'v' + (buyWins ? ' good' : ''); $('r-rentv').className = 'v' + (!buyWins ? ' good' : '');
+  $('r-own').textContent = usd(r.first) + '/mo'; $('r-rent0').textContent = usd(rent0) + '/mo';
+  let lo = 0, hi = 20000; for (let k = 0; k < 40; k++) { const mid = (lo + hi) / 2, x = rvb({ price, rent0: mid, rate, down, years, inv: 1 }); if (x.port > x.eq) lo = mid; else hi = mid; }
+  $('r-be').textContent = usd(lo) + '/mo';
+  $('r-say').innerHTML = !RINV ? `If you rent but spend the difference, <b>buying wins</b>. A mortgage is a savings plan you can't skip.` : buyWins ? `Buying wins here. Rent for a similar home would need to drop below <b>${usd(lo)}</b> a month for renting to win.` : `Renting wins, but only because you invest the difference every month. If rent were above <b>${usd(lo)}</b>, buying would win.`;
+  chart($('r-chart'), { x0: 0, x1: years, xt: ticks(0, years), xs: 'y', ymax: Math.max(r.eq, r.port, 1000) * 1.08, series: [{ d: r.P.map(p => [p[0], Math.max(0, p[1])]), c: '--buy', w: 3.5 }, { d: r.P.map(p => [p[0], Math.max(0, p[2])]), c: '--accent', fill: true }] });
+  OUT.rent = { head: buyWins ? 'BUYING WINS FOR ME' : 'RENTING WINS FOR ME', big: '+' + usd(gap), good: true, lines: [`after ${years} years`, `Buy: ${short(r.eq)} · Rent: ${short(r.port)}`, `Break-even rent: ${usd(lo)}/mo`], text: `Rent or buy? For me, ${buyWins ? 'buying' : 'renting'} wins by ${usd(gap)} after ${years} years.` };
+}
+$('r-inv').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; RINV = +b.dataset.v; rentbuy(); });
+
 let GOAL = 1000000;
 function million() {
   const age = +$('m-age').value; let ret = +$('m-ret').value; if (ret <= age + 1) { ret = age + 2; $('m-ret').value = ret; }
@@ -420,7 +486,7 @@ function million() {
   OUT.million = { head: `MY PATH TO ${short(GOAL)}`, big: usd(n) + '/mo', good: true, lines: [`from ${age} to ${ret}`, `≈ ${usd2(n * 12 / 365)} a day`, yrs > 5 ? `Wait 5 years: ${usd(late)}/mo` : ''], text: `To reach ${usd(GOAL)} by ${ret}, I need to invest ${usd(n)} a month starting at ${age}.` };
 }
 
-const V = { future, twins, waiting, habit, million };
+const V = { future, twins, waiting, habit, million, rent: rentbuy };
 for (const k in V) document.querySelectorAll(`#v-${k} input, #v-${k} select`).forEach(el => el.addEventListener('input', V[k]));
 document.querySelectorAll('.chips[data-for]').forEach(c => c.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; $(c.dataset.for).value = b.dataset.v; $(c.dataset.for).dispatchEvent(new Event('input')); }));
 $('h-chips').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; $('h-amt').value = b.dataset.a; $('h-per').value = b.dataset.p; habit(); });
