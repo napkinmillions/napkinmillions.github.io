@@ -159,6 +159,7 @@ footer { color: var(--muted); font-size: 13px; display: grid; gap: 4px; }
     <a href="#habit"><span class="ic" aria-hidden="true">☕</span><b>What does a habit cost?</b><small>Coffee, car, subscriptions</small></a>
     <a href="#million"><span class="ic" aria-hidden="true">🎯</span><b>How do I reach $1M?</b><small>Your monthly target</small></a>
     <a href="#rent"><span class="ic" aria-hidden="true">🏠</span><b>Rent or buy?</b><small>Who's richer later</small></a>
+    <a href="#car"><span class="ic" aria-hidden="true">🚗</span><b>New or used car?</b><small>What your car really costs</small></a>
   </nav>
 
   <section class="tool" id="v-future">
@@ -323,6 +324,31 @@ footer { color: var(--muted); font-size: 13px; display: grid; gap: 4px; }
     </article>
   </section>
 
+  <section class="tool" id="v-car" hidden>
+    <form class="panel" onsubmit="return false">
+      <h2>New or used car?</h2>
+      <p class="lead">From our video: Nick buys new every 6 years, Uma buys the same car used. Filled with US averages. Change them to yours.</p>
+      <div class="q"><label for="c-price">Price of the car new</label><div class="money"><span>$</span><input id="c-price" type="number" inputmode="numeric" min="0" step="1000" value="50562"></div></div>
+      <div class="choice"><div><b>I'd buy it</b><small>Compared with buying new every 6 years</small></div><div class="seg" id="c-age"><button type="button" data-v="0">New</button><button type="button" data-v="3">3 yrs old</button><button type="button" data-v="5">5 yrs old</button></div></div>
+      <div class="q"><label for="c-keep">I keep each car for <output id="c-keep-o">6 years</output></label><input id="c-keep" type="range" min="3" max="15" step="1" value="6"></div>
+      <div class="q"><label for="c-rate">Car loan rate <output id="c-rate-o">7%</output></label><input id="c-rate" type="range" min="0" max="15" step="0.25" value="7"></div>
+      <div class="q"><label for="c-myage">My age now <output id="c-myage-o">25</output></label><input id="c-myage" type="range" min="18" max="60" value="25"></div>
+    </form>
+    <article class="answer" aria-live="polite">
+      <div class="k" id="c-k">At 65, investing the difference, you'd have</div>
+      <div class="hero-num" id="c-big">$0</div>
+      <p class="say" id="c-say"></p>
+      <div class="vs">
+        <div class="fact"><div class="t">New every 6 years: payment</div><div class="v" id="c-p0">$0</div></div>
+        <div class="fact"><div class="t">Your choice: payment</div><div class="v" id="c-p1">$0</div></div>
+      </div>
+      <svg class="chart" id="c-chart" viewBox="0 0 640 250" role="img" aria-label="Money from investing the difference over time"></svg>
+      <div class="legend"><span><i style="background:var(--accent)"></i>The difference, invested at 7%</span></div>
+      <div class="share"><button class="btn main" type="button" data-card="car">Make a picture for my story</button><button class="btn" type="button" data-copy="car">Copy my result</button></div>
+      <p class="small">Assumptions: value drops 41.8% in 5 years and keeps falling at that pace; trade-in is the down payment (first car: 11.7% down); 72-month loans, used cars at your rate + 2%; repairs $1,755 a year for cars under 5 years old, $2,500 at 5 to 10, $3,300 after; prices rise 3% a year; investments 7% a year. Insurance, fuel and taxes are left out. Not financial advice.</p>
+    </article>
+  </section>
+
   <section class="video">
     <div><b>See the math explained, step by step</b><p>Animated videos with real numbers. New ones every week.</p></div>
     <a class="btn yt" href="https://www.youtube.com/@NapkinMillions" target="_blank" rel="noopener">▶ Watch on YouTube</a>
@@ -472,6 +498,41 @@ function rentbuy() {
 }
 $('r-inv').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; RINV = +b.dataset.v; rentbuy(); });
 
+// new vs used car (Episode 6 model)
+let CAGE = 5;
+function carRun({ price, buyAge, keep, apr, years }) {
+  const val = a => Math.pow(1 - 0.418, a / 5), rep = a => a < 5 ? 1755 : a < 10 ? 2500 : 3300;
+  const pmt = (P, r, n) => { const i = r / 12; return i ? P * i / (1 - Math.pow(1 + i, -n)) : P / n; };
+  const n = years * 12, cost = new Array(n).fill(0); let m = 0, first = null;
+  while (m < n) {
+    const f = Math.pow(1.03, m / 12), p0 = price * val(buyAge) * f, trade = m > 0 ? price * val(buyAge + keep) * f : 0;
+    const down = m === 0 ? (price - 44664 / 50562 * price) * val(buyAge) * f : 0, loan = Math.max(0, p0 - trade - down), p = loan > 0 ? pmt(loan, apr, 72) : 0;
+    if (first === null) first = p;
+    cost[m] += down;
+    for (let k = 0; k < keep * 12 && m + k < n; k++) cost[m + k] += (k < 72 ? p : 0) + rep(buyAge + k / 12) / 12 * Math.pow(1.03, (m + k) / 12);
+    m += keep * 12;
+  }
+  const last = Math.floor((n - 1) / (keep * 12)) * keep * 12, endVal = price * val(buyAge + (n - last) / 12) * Math.pow(1.03, years);
+  return { cost, endVal, first };
+}
+function car() {
+  const price = val('c-price', 50562), keep = +$('c-keep').value, rate = val('c-rate') / 100, age = +$('c-myage').value, years = Math.max(1, 65 - age);
+  $('c-keep-o').textContent = keep + ' years'; $('c-rate-o').textContent = val('c-rate') + '%'; $('c-myage-o').textContent = age;
+  $('c-age').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.v === CAGE)));
+  const a = carRun({ price, buyAge: 0, keep: 6, apr: rate, years }), b = carRun({ price, buyAge: CAGE, keep, apr: CAGE ? rate + 0.02 : rate, years });
+  let port = 0; const P = [[age, 0]];
+  for (let m = 0; m < years * 12; m++) { port = port * Math.pow(1.07, 1 / 12) + (a.cost[m] - b.cost[m]); if ((m + 1) % 12 === 0) P.push([age + (m + 1) / 12, port]); }
+  const fin = port + b.endVal - a.endVal, today = fin / Math.pow(1.03, years), same = CAGE === 0 && keep === 6;
+  $('c-k').textContent = same ? 'Pick a used car or keep it longer to compare' : `At 65, vs a new car every 6 years, you'd be ahead by`;
+  $('c-big').textContent = (fin < 0 ? '−' : '') + usd(Math.abs(fin)).replace('−', ''); $('c-big').className = 'hero-num' + (fin < 0 ? ' loss' : '');
+  $('c-p0').textContent = usd(a.first) + '/mo'; $('c-p1').textContent = usd(b.first) + '/mo';
+  $('c-say').innerHTML = same ? 'This is Nick: a new car every 6 years. Try <b>5 yrs old</b> or keep it longer.' : fin >= 0 ? `That's about <b>${usd(today)}</b> in today's money, only if you invest the difference every month.` : `This choice costs more than a new car every 6 years. Try keeping it longer.`;
+  chart($('c-chart'), { x0: age, x1: 65, xt: ticks(age, 65), ymax: Math.max(1000, ...P.map(p => p[1])) * 1.08, series: [{ d: P.map(p => [p[0], Math.max(0, p[1])]), c: '--accent', fill: true }] });
+  const lab = CAGE ? `${CAGE}-year-old car` : 'new car';
+  OUT.car = { head: 'MY CAR CHOICE AT 65', big: (fin < 0 ? '−' : '+') + usd(Math.abs(fin)), good: fin >= 0, lines: [`${lab}, kept ${keep} years`, `vs new every 6 years`, `≈ ${short(Math.abs(today))} in today's money`], text: `Buying a ${lab} and keeping it ${keep} years instead of a new car every 6 years: ${usd(fin)} by 65.` };
+}
+$('c-age').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; CAGE = +b.dataset.v; car(); });
+
 let GOAL = 1000000;
 function million() {
   const age = +$('m-age').value; let ret = +$('m-ret').value; if (ret <= age + 1) { ret = age + 2; $('m-ret').value = ret; }
@@ -486,7 +547,7 @@ function million() {
   OUT.million = { head: `MY PATH TO ${short(GOAL)}`, big: usd(n) + '/mo', good: true, lines: [`from ${age} to ${ret}`, `≈ ${usd2(n * 12 / 365)} a day`, yrs > 5 ? `Wait 5 years: ${usd(late)}/mo` : ''], text: `To reach ${usd(GOAL)} by ${ret}, I need to invest ${usd(n)} a month starting at ${age}.` };
 }
 
-const V = { future, twins, waiting, habit, million, rent: rentbuy };
+const V = { future, twins, waiting, habit, million, rent: rentbuy, car };
 for (const k in V) document.querySelectorAll(`#v-${k} input, #v-${k} select`).forEach(el => el.addEventListener('input', V[k]));
 document.querySelectorAll('.chips[data-for]').forEach(c => c.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; $(c.dataset.for).value = b.dataset.v; $(c.dataset.for).dispatchEvent(new Event('input')); }));
 $('h-chips').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; $('h-amt').value = b.dataset.a; $('h-per').value = b.dataset.p; habit(); });
