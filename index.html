@@ -160,6 +160,7 @@ footer { color: var(--muted); font-size: 13px; display: grid; gap: 4px; }
     <a href="#million"><span class="ic" aria-hidden="true">🎯</span><b>How do I reach $1M?</b><small>Your monthly target</small></a>
     <a href="#rent"><span class="ic" aria-hidden="true">🏠</span><b>Rent or buy?</b><small>Who's richer later</small></a>
     <a href="#car"><span class="ic" aria-hidden="true">🚗</span><b>New or used car?</b><small>What your car really costs</small></a>
+    <a href="#lottery"><span class="ic" aria-hidden="true">🎟</span><b>Lottery or $500 a month?</b><small>What a windfall really becomes</small></a>
   </nav>
 
   <section class="tool" id="v-future">
@@ -348,6 +349,31 @@ footer { color: var(--muted); font-size: 13px; display: grid; gap: 4px; }
       <p class="small">Assumptions: value drops 41.8% in 5 years and keeps falling at that pace; trade-in is the down payment (first car: 11.7% down); 72-month loans, used cars at your rate + 2%; repairs $1,755 a year for cars under 5 years old, $2,500 at 5 to 10, $3,300 after; prices rise 3% a year; investments 7% a year. Insurance, fuel and taxes are left out. Not financial advice.</p>
     </article>
   </section>
+  <section class="tool" id="v-lottery" hidden>
+    <form class="panel" onsubmit="return false">
+      <h2>Lottery check or $500 a month?</h2>
+      <p class="lead">From our video: Tyler wins $1,000,000, Grace invests $500 a month. Filled with the video's numbers. Change them to yours.</p>
+      <div class="q"><label for="l-prize">Windfall before tax</label><div class="money"><span>$</span><input id="l-prize" type="number" inputmode="numeric" min="0" step="10000" value="1000000"></div></div>
+      <div class="q"><label for="l-sal">My yearly salary</label><div class="money"><span>$</span><input id="l-sal" type="number" inputmode="numeric" min="0" step="1000" value="55000"></div></div>
+      <div class="q"><label for="l-state">State tax on it <output id="l-state-o">5%</output></label><input id="l-state" type="range" min="0" max="11" step="0.5" value="5"></div>
+      <div class="q"><label for="l-keep">I'd invest from the check <output id="l-keep-o">15%</output></label><input id="l-keep" type="range" min="0" max="100" step="1" value="15"></div>
+      <div class="q"><label for="l-mo">Or I invest every month</label><div class="money"><span>$</span><input id="l-mo" type="number" inputmode="numeric" min="0" step="50" value="500"></div></div>
+      <div class="q"><label for="l-age">My age now <output id="l-age-o">25</output></label><input id="l-age" type="range" min="18" max="60" value="25"></div>
+    </form>
+    <article class="answer" aria-live="polite">
+      <div class="k" id="l-k">The part of the check you invest becomes, at 65</div>
+      <div class="hero-num" id="l-big">$0</div>
+      <p class="say" id="l-say"></p>
+      <div class="vs">
+        <div class="fact"><div class="t">Check after all taxes</div><div class="v" id="l-net">$0</div></div>
+        <div class="fact"><div class="t">Monthly investing at 65</div><div class="v" id="l-mo65">$0</div></div>
+      </div>
+      <svg class="chart" id="l-chart" viewBox="0 0 640 250" role="img" aria-label="Invested windfall versus monthly investing over time"></svg>
+      <div class="legend"><span><i style="background:var(--accent)"></i>Invested part of the check</span><span><i style="background:var(--loss)"></i>Monthly investing</span></div>
+      <div class="share"><button class="btn main" type="button" data-card="lottery">Make a picture for my story</button><button class="btn" type="button" data-copy="lottery">Copy my result</button></div>
+      <p class="small">Assumptions: federal tax from 2026 brackets for a single filer, the windfall added to your salary for one year; state tax as set; investments grow 7% a year, compounded monthly; future dollars, today's value uses 3% inflation. Not financial or tax advice.</p>
+    </article>
+  </section>
 
   <section class="video">
     <div><b>See the math explained, step by step</b><p>Animated videos with real numbers. New ones every week.</p></div>
@@ -533,6 +559,24 @@ function car() {
 }
 $('c-age').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; CAGE = +b.dataset.v; car(); });
 
+// lottery vs monthly investing (Episode 7 model)
+function fedTax(g) {
+  const B = [[12400, .10], [50400, .12], [105700, .22], [201775, .24], [256225, .32], [640600, .35], [1e18, .37]];
+  let ti = Math.max(0, g - 16100), t = 0, lo = 0; for (const [hi, r] of B) { if (ti > lo) t += (Math.min(ti, hi) - lo) * r; lo = hi; } return t;
+}
+function lottery() {
+  const prize = val('l-prize', 1000000), sal = val('l-sal', 55000), st = val('l-state') / 100, keep = +$('l-keep').value / 100, mo = val('l-mo', 500), age = +$('l-age').value, years = Math.max(1, 65 - age);
+  $('l-state-o').textContent = val('l-state') + '%'; $('l-keep-o').textContent = Math.round(keep * 100) + '%'; $('l-age-o').textContent = age;
+  const net = prize - (fedTax(sal + prize) - fedTax(sal)) - prize * st, inv = net * keep, rm = Math.pow(1.07, 1 / 12) - 1;
+  let a = inv, b = 0; const A = [[age, a]], Bv = [[age, 0]];
+  for (let m = 1; m <= years * 12; m++) { a *= 1 + rm; b = b * (1 + rm) + mo; if (m % 12 === 0) { A.push([age + m / 12, a]); Bv.push([age + m / 12, b]); } }
+  $('l-net').textContent = usd(net); $('l-mo65').textContent = usd(b); $('l-big').textContent = usd(a); $('l-big').className = 'hero-num';
+  const need = b / Math.pow(1 + rm, years * 12), today = a / Math.pow(1.03, years);
+  $('l-say').innerHTML = `Investing <b>${usd(inv)}</b> of a <b>${usd(net)}</b> check at ${age} gives about <b>${usd(today)}</b> in today's money at 65. To match ${usd(mo)} a month, you'd only need to invest <b>${usd(need)}</b> of it.`;
+  chart($('l-chart'), { x0: age, x1: 65, xt: ticks(age, 65), ymax: Math.max(1000, a, b) * 1.08, series: [{ d: A, c: '--accent', fill: true }, { d: Bv, c: '--loss' }] });
+  OUT.lottery = { head: 'MY WINDFALL AT 65', big: usd(a), good: a >= b, lines: [`${usd(inv)} of a ${short(net)} check, invested`, `vs ${usd(mo)}/mo: ${short(b)}`, `≈ ${short(today)} in today's money`], text: `Investing ${usd(inv)} of a ${usd(net)} after-tax windfall at ${age}: ${usd(a)} at 65. Investing ${usd(mo)} a month instead: ${usd(b)}.` };
+}
+
 let GOAL = 1000000;
 function million() {
   const age = +$('m-age').value; let ret = +$('m-ret').value; if (ret <= age + 1) { ret = age + 2; $('m-ret').value = ret; }
@@ -547,7 +591,7 @@ function million() {
   OUT.million = { head: `MY PATH TO ${short(GOAL)}`, big: usd(n) + '/mo', good: true, lines: [`from ${age} to ${ret}`, `≈ ${usd2(n * 12 / 365)} a day`, yrs > 5 ? `Wait 5 years: ${usd(late)}/mo` : ''], text: `To reach ${usd(GOAL)} by ${ret}, I need to invest ${usd(n)} a month starting at ${age}.` };
 }
 
-const V = { future, twins, waiting, habit, million, rent: rentbuy, car };
+const V = { future, twins, waiting, habit, million, rent: rentbuy, car, lottery };
 for (const k in V) document.querySelectorAll(`#v-${k} input, #v-${k} select`).forEach(el => el.addEventListener('input', V[k]));
 document.querySelectorAll('.chips[data-for]').forEach(c => c.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; $(c.dataset.for).value = b.dataset.v; $(c.dataset.for).dispatchEvent(new Event('input')); }));
 $('h-chips').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; $('h-amt').value = b.dataset.a; $('h-per').value = b.dataset.p; habit(); });
