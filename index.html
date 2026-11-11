@@ -161,6 +161,7 @@ footer { color: var(--muted); font-size: 13px; display: grid; gap: 4px; }
     <a href="#rent"><span class="ic" aria-hidden="true">🏠</span><b>Rent or buy?</b><small>Who's richer later</small></a>
     <a href="#car"><span class="ic" aria-hidden="true">🚗</span><b>New or used car?</b><small>What your car really costs</small></a>
     <a href="#lottery"><span class="ic" aria-hidden="true">🎟</span><b>Lottery or $500 a month?</b><small>What a windfall really becomes</small></a>
+    <a href="#salary"><span class="ic" aria-hidden="true">💼</span><b>Big salary or early start?</b><small>Savings rate vs paycheck</small></a>
   </nav>
 
   <section class="tool" id="v-future">
@@ -375,6 +376,32 @@ footer { color: var(--muted); font-size: 13px; display: grid; gap: 4px; }
     </article>
   </section>
 
+  <section class="tool" id="v-salary" hidden>
+    <form class="panel" onsubmit="return false">
+      <h2>Big salary or early start?</h2>
+      <p class="lead">From our video: Olivia earns $200,000 and starts saving at 45. Ben earns $60,000 and saves 15% from 25. Filled with the video's numbers. Change them to yours.</p>
+      <div class="q"><label for="s-sal">My yearly salary</label><div class="money"><span>$</span><input id="s-sal" type="number" inputmode="numeric" min="0" step="1000" value="200000"></div></div>
+      <div class="q"><label for="s-pct">I invest from it <output id="s-pct-o">20%</output></label><input id="s-pct" type="range" min="0" max="50" step="0.5" value="20"></div>
+      <div class="q"><label for="s-age">Starting at age <output id="s-age-o">45</output></label><input id="s-age" type="range" min="18" max="60" value="45"></div>
+      <div class="q"><label for="s-sal2">The other person's salary</label><div class="money"><span>$</span><input id="s-sal2" type="number" inputmode="numeric" min="0" step="1000" value="60000"></div></div>
+      <div class="q"><label for="s-pct2">They invest from it <output id="s-pct2-o">15%</output></label><input id="s-pct2" type="range" min="0" max="50" step="0.5" value="15"></div>
+      <div class="q"><label for="s-age2">Starting at age <output id="s-age2-o">25</output></label><input id="s-age2" type="range" min="18" max="60" value="25"></div>
+    </form>
+    <article class="answer" aria-live="polite">
+      <div class="k" id="s-k">My investments at 65</div>
+      <div class="hero-num" id="s-big">$0</div>
+      <p class="say" id="s-say"></p>
+      <div class="vs">
+        <div class="fact"><div class="t">The other person at 65</div><div class="v" id="s-other">$0</div></div>
+        <div class="fact"><div class="t">Rate I need to match them</div><div class="v" id="s-need">0%</div></div>
+      </div>
+      <svg class="chart" id="s-chart" viewBox="0 0 640 250" role="img" aria-label="My investments versus the other person's over time"></svg>
+      <div class="legend"><span><i style="background:var(--accent)"></i>Me</span><span><i style="background:var(--loss)"></i>The other person</span></div>
+      <div class="share"><button class="btn main" type="button" data-card="salary">Make a picture for my story</button><button class="btn" type="button" data-copy="salary">Copy my result</button></div>
+      <p class="small">Assumptions: salaries stay flat, the same share is invested every month until 65, investments grow 7% a year, compounded monthly; future dollars, today's value uses 3% inflation; taxes on the investments are ignored. Not financial advice.</p>
+    </article>
+  </section>
+
   <section class="video">
     <div><b>See the math explained, step by step</b><p>Animated videos with real numbers. New ones every week.</p></div>
     <a class="btn yt" href="https://www.youtube.com/@NapkinMillions" target="_blank" rel="noopener">▶ Watch on YouTube</a>
@@ -577,6 +604,19 @@ function lottery() {
   OUT.lottery = { head: 'MY WINDFALL AT 65', big: usd(a), good: a >= b, lines: [`${usd(inv)} of a ${short(net)} check, invested`, `vs ${usd(mo)}/mo: ${short(b)}`, `≈ ${short(today)} in today's money`], text: `Investing ${usd(inv)} of a ${usd(net)} after-tax windfall at ${age}: ${usd(a)} at 65. Investing ${usd(mo)} a month instead: ${usd(b)}.` };
 }
 
+function salary() {
+  const sal = val('s-sal', 200000), pct = +$('s-pct').value / 100, age = +$('s-age').value, sal2 = val('s-sal2', 60000), pct2 = +$('s-pct2').value / 100, age2 = +$('s-age2').value;
+  $('s-pct-o').textContent = +$('s-pct').value + '%'; $('s-age-o').textContent = age; $('s-pct2-o').textContent = +$('s-pct2').value + '%'; $('s-age2-o').textContent = age2;
+  const rm = Math.pow(1.07, 1 / 12) - 1, a0 = Math.min(age, age2), mo = sal * pct / 12, mo2 = sal2 * pct2 / 12;
+  let a = 0, b = 0; const A = [[a0, 0]], B = [[a0, 0]];
+  for (let m = 1; m <= (65 - a0) * 12; m++) { const y = a0 + m / 12; if (y > age) a = a * (1 + rm) + mo; if (y > age2) b = b * (1 + rm) + mo2; if (m % 12 === 0) { A.push([y, a]); B.push([y, b]); } }
+  const fvf = (Math.pow(1 + rm, (65 - age) * 12) - 1) / rm, need = sal > 0 && fvf > 0 ? b / fvf * 12 / sal : 0, today = a / Math.pow(1.03, 65 - age), win = a >= b;
+  $('s-big').textContent = usd(a); $('s-big').className = 'hero-num' + (win ? '' : ' loss'); $('s-other').textContent = usd(b); $('s-need').textContent = (need * 100).toFixed(1) + '%';
+  $('s-say').innerHTML = `Investing <b>${usd(mo)}</b> a month from ${age} gives about <b>${usd(today)}</b> in today's money at 65. The other person invests <b>${usd(mo2)}</b> a month from ${age2} and ends with <b>${usd(b)}</b>. ${win ? 'You finish ahead by' : 'They finish ahead by'} <b>${usd(Math.abs(a - b))}</b>.`;
+  chart($('s-chart'), { x0: a0, x1: 65, xt: ticks(a0, 65), ymax: Math.max(1000, a, b) * 1.08, series: [{ d: A, c: '--accent', fill: true }, { d: B, c: '--loss' }] });
+  OUT.salary = { head: 'MY INVESTMENTS AT 65', big: usd(a), good: win, lines: [`${(pct * 100).toFixed(0)}% of ${short(sal)}, from age ${age}`, `vs ${(pct2 * 100).toFixed(0)}% of ${short(sal2)}, from ${age2}: ${short(b)}`, `To match: ${(need * 100).toFixed(1)}% of my pay`], text: `Investing ${(pct * 100).toFixed(0)}% of a ${usd(sal)} salary from age ${age}: ${usd(a)} at 65. Investing ${(pct2 * 100).toFixed(0)}% of ${usd(sal2)} from age ${age2}: ${usd(b)}.` };
+}
+
 let GOAL = 1000000;
 function million() {
   const age = +$('m-age').value; let ret = +$('m-ret').value; if (ret <= age + 1) { ret = age + 2; $('m-ret').value = ret; }
@@ -591,7 +631,7 @@ function million() {
   OUT.million = { head: `MY PATH TO ${short(GOAL)}`, big: usd(n) + '/mo', good: true, lines: [`from ${age} to ${ret}`, `≈ ${usd2(n * 12 / 365)} a day`, yrs > 5 ? `Wait 5 years: ${usd(late)}/mo` : ''], text: `To reach ${usd(GOAL)} by ${ret}, I need to invest ${usd(n)} a month starting at ${age}.` };
 }
 
-const V = { future, twins, waiting, habit, million, rent: rentbuy, car, lottery };
+const V = { future, twins, waiting, habit, million, rent: rentbuy, car, lottery, salary };
 for (const k in V) document.querySelectorAll(`#v-${k} input, #v-${k} select`).forEach(el => el.addEventListener('input', V[k]));
 document.querySelectorAll('.chips[data-for]').forEach(c => c.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; $(c.dataset.for).value = b.dataset.v; $(c.dataset.for).dispatchEvent(new Event('input')); }));
 $('h-chips').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; $('h-amt').value = b.dataset.a; $('h-per').value = b.dataset.p; habit(); });
