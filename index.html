@@ -407,20 +407,20 @@ footer { color: var(--muted); font-size: 13px; display: grid; gap: 4px; }
     <form class="panel" onsubmit="return false">
       <h2>Is my Costco membership worth it?</h2>
       <p class="lead">From our $1.50 hot dog video. The fee only pays off if you really save on things you'd buy anyway. Extras you grab "because it's a deal" count as spending, not saving.</p>
-      <div class="q"><label for="c-spend">I spend there each month</label><div class="money"><span>$</span><input id="c-spend" type="number" inputmode="numeric" min="0" step="10" value="250"></div></div>
-      <div class="q"><label for="c-save">It's cheaper than my usual store by <output id="c-save-o">10%</output></label><input id="c-save" type="range" min="0" max="35" step="1" value="10"></div>
-      <div class="q"><label for="c-extra">Part of my cart I wouldn't buy otherwise <output id="c-extra-o">5%</output></label><input id="c-extra" type="range" min="0" max="50" step="1" value="5"></div>
-      <div class="q"><label for="c-type">Membership</label><select id="c-type"><option value="gold">Gold Star: $65 a year</option><option value="exec">Executive: $130 a year, 2% back</option></select></div>
+      <div class="q"><label for="cm-spend">I spend there each month</label><div class="money"><span>$</span><input id="cm-spend" type="number" inputmode="numeric" min="0" step="10" value="250"></div></div>
+      <div class="q"><label for="cm-save">It's cheaper than my usual store by <output id="cm-save-o">10%</output></label><input id="cm-save" type="range" min="0" max="35" step="1" value="10"></div>
+      <div class="q"><label for="cm-extra">Part of my cart I wouldn't buy otherwise <output id="cm-extra-o">5%</output></label><input id="cm-extra" type="range" min="0" max="50" step="1" value="5"></div>
+      <div class="q"><label for="cm-type">Membership</label><select id="cm-type"><option value="gold">Gold Star: $65 a year</option><option value="exec">Executive: $130 a year, 2% back</option></select></div>
     </form>
     <article class="answer" aria-live="polite">
-      <div class="k" id="c-k">What the membership really does for me, per year</div>
-      <div class="hero-num" id="c-big">$0</div>
-      <p class="say" id="c-say"></p>
+      <div class="k" id="cm-k">What the membership really does for me, per year</div>
+      <div class="hero-num" id="cm-big">$0</div>
+      <p class="say" id="cm-say"></p>
       <div class="vs">
-        <div class="fact"><div class="t">Saved on things I need</div><div class="v good" id="c-saved">$0</div></div>
-        <div class="fact"><div class="t">Extras I didn't plan</div><div class="v loss" id="c-extras">$0</div></div>
-        <div class="fact"><div class="t">Fee (minus 2% reward)</div><div class="v" id="c-fee">$0</div></div>
-        <div class="fact"><div class="t">Break-even spend</div><div class="v" id="c-be">$0</div></div>
+        <div class="fact"><div class="t">Saved on things I need</div><div class="v good" id="cm-saved">$0</div></div>
+        <div class="fact"><div class="t">Extras I didn't plan</div><div class="v loss" id="cm-extras">$0</div></div>
+        <div class="fact"><div class="t">Fee (minus 2% reward)</div><div class="v" id="cm-fee">$0</div></div>
+        <div class="fact"><div class="t">Break-even spend</div><div class="v" id="cm-be">$0</div></div>
       </div>
       <div class="share"><button class="btn main" type="button" data-card="costco">Make a picture for my story</button><button class="btn" type="button" data-copy="costco">Copy my result</button></div>
       <p class="small">How it's counted: savings = your monthly spend on things you'd buy anyway × how much cheaper it is. Extras are counted as money spent, not saved. Executive reward: 2% of purchases, up to $1,250 a year. US fees since Sept 2024. Your store's prices vary. Not financial advice.</p>
@@ -643,16 +643,16 @@ function salary() {
 }
 
 function costco() {
-  const spend = val('c-spend', 250) * 12, sv = +$('c-save').value / 100, ex = +$('c-extra').value / 100, exec = $('c-type').value === 'exec';
-  $('c-save-o').textContent = Math.round(sv * 100) + '%'; $('c-extra-o').textContent = Math.round(ex * 100) + '%';
+  const spend = val('cm-spend', 250) * 12, sv = +$('cm-save').value / 100, ex = +$('cm-extra').value / 100, exec = $('cm-type').value === 'exec';
+  $('cm-save-o').textContent = Math.round(sv * 100) + '%'; $('cm-extra-o').textContent = Math.round(ex * 100) + '%';
   const fee = exec ? 130 : 65, reward = exec ? Math.min(1250, spend * 0.02) : 0, need = spend * (1 - ex), saved = need * sv, extras = spend * ex, net = Math.round(saved + reward - fee - extras);
   const be = sv > 0 ? fee / sv / 12 : Infinity, upg = 65 / 0.02 / 12;
   const goldNet = saved - 65 - extras, execNet = saved + Math.min(1250, spend * 0.02) - 130 - extras;
-  $('c-big').textContent = (net >= 0 ? '+' : '') + usd(net); $('c-big').className = 'hero-num' + (net >= 0 ? '' : ' loss');
-  $('c-saved').textContent = usd(saved); $('c-extras').textContent = usd(extras); $('c-fee').textContent = usd(fee - reward);
-  $('c-be').textContent = Number.isFinite(be) ? usd(be) + '/mo' : '—';
+  $('cm-big').textContent = (net >= 0 ? '+' : '') + usd(net); $('cm-big').className = 'hero-num' + (net >= 0 ? '' : ' loss');
+  $('cm-saved').textContent = usd(saved); $('cm-extras').textContent = usd(extras); $('cm-fee').textContent = usd(fee - reward);
+  $('cm-be').textContent = Number.isFinite(be) ? usd(be) + '/mo' : '—';
   const better = execNet > goldNet ? 'Executive' : 'Gold Star';
-  $('c-say').innerHTML = net >= 0
+  $('cm-say').innerHTML = net >= 0
     ? `The membership leaves you about <b>${usd(net)}</b> ahead each year. That's <b>${Math.floor(net / 1.5)}</b> hot dogs. With your spending, <b>${better}</b> is the better fit (Executive pays off above about <b>${usd(upg)}</b> a month).`
     : `Right now the membership costs you about <b>${usd(-net)}</b> a year. ${extras > saved ? 'The extras eat more than the discount saves.' : `You'd need to spend about <b>${usd(be)}</b> a month on things you'd buy anyway to break even.`}`;
   OUT.costco = { head: 'MY MEMBERSHIP, PER YEAR', big: (net >= 0 ? '+' : '−') + usd(Math.abs(net)), good: net >= 0, lines: [`Spend ${usd(spend / 12)}/mo, ${Math.round(sv * 100)}% cheaper`, `Extras: ${usd(extras)} a year`, `Better fit: ${better}`], text: `My ${exec ? 'Executive' : 'Gold Star'} membership: ${(net >= 0 ? '+' : '−') + usd(Math.abs(net))} a year after the fee and the extras.` };
