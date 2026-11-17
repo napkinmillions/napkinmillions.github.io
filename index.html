@@ -163,6 +163,7 @@ footer { color: var(--muted); font-size: 13px; display: grid; gap: 4px; }
     <a href="#lottery"><span class="ic" aria-hidden="true">🎟</span><b>Lottery or $500 a month?</b><small>What a windfall really becomes</small></a>
     <a href="#salary"><span class="ic" aria-hidden="true">💼</span><b>Big salary or early start?</b><small>Savings rate vs paycheck</small></a>
     <a href="#costco"><span class="ic" aria-hidden="true">🌭</span><b>Is my Costco membership worth it?</b><small>Fee vs real savings</small></a>
+    <a href="#blackfriday"><span class="ic" aria-hidden="true">🛍</span><b>Is this Black Friday deal real?</b><small>What the sale really costs you</small></a>
   </nav>
 
   <section class="tool" id="v-future">
@@ -427,6 +428,34 @@ footer { color: var(--muted); font-size: 13px; display: grid; gap: 4px; }
     </article>
   </section>
 
+  <section class="tool" id="v-blackfriday" hidden>
+    <form class="panel" onsubmit="return false">
+      <h2>Is this Black Friday deal real?</h2>
+      <p class="lead">From our Black Friday video. The crossed-out price is an anchor, and the way you pay can turn a discount into paying extra. Put in the numbers from the tag and see what the deal really costs.</p>
+      <div class="q"><label for="bf-sale">Sale price</label><div class="money"><span>$</span><input id="bf-sale" type="number" inputmode="numeric" min="0" step="10" value="1000"></div></div>
+      <div class="q"><label for="bf-was">Crossed-out "was" price</label><div class="money"><span>$</span><input id="bf-was" type="number" inputmode="numeric" min="0" step="10" value="1430"></div></div>
+      <div class="q"><label for="bf-low">Lowest price in the last 12 months (from a price tracker, leave empty if you don't know)</label><div class="money"><span>$</span><input id="bf-low" type="number" inputmode="numeric" min="0" step="10" value="" placeholder="optional"></div></div>
+      <div class="q"><label for="bf-pay">How I'll pay</label><select id="bf-pay"><option value="min">Credit card, minimum payments</option><option value="fixed">Credit card, a fixed amount each month</option><option value="full">In full, right away</option><option value="bnpl">Buy now, pay later (4 payments, no fees)</option></select></div>
+      <div class="q" id="bf-fixed-q"><label for="bf-fixed">I'll pay each month</label><div class="money"><span>$</span><input id="bf-fixed" type="number" inputmode="numeric" min="0" step="10" value="100"></div></div>
+      <div class="q" id="bf-apr-q"><label for="bf-apr">Card interest rate (APR) <output id="bf-apr-o">22%</output></label><input id="bf-apr" type="range" min="0" max="36" step="0.01" value="22.36"></div>
+    </form>
+    <article class="answer" aria-live="polite">
+      <div class="k" id="bf-k">What this deal really costs me</div>
+      <div class="hero-num" id="bf-big">$0</div>
+      <p class="say" id="bf-say"></p>
+      <div class="vs">
+        <div class="fact"><div class="t">Discount on the tag</div><div class="v good" id="bf-tag">$0</div></div>
+        <div class="fact"><div class="t">Interest I'll pay</div><div class="v loss" id="bf-int">$0</div></div>
+        <div class="fact"><div class="t">Time to pay it off</div><div class="v" id="bf-time">—</div></div>
+        <div class="fact"><div class="t">Vs the lowest price this year</div><div class="v" id="bf-vs">—</div></div>
+      </div>
+      <svg class="chart" id="bf-chart" viewBox="0 0 640 250" role="img" aria-label="What I've paid so far versus the full price, by month"></svg>
+      <div class="legend"><span><i style="background:var(--loss)"></i>Paid so far</span><span><i style="background:var(--muted)"></i>Full "was" price</span></div>
+      <div class="share"><button class="btn main" type="button" data-card="blackfriday">Make a picture for my story</button><button class="btn" type="button" data-copy="blackfriday">Copy my result</button></div>
+      <p class="small">How it's counted: minimum payment = the month's interest + 1% of what you owe, at least $25, and no new purchases on the card. Interest is charged monthly at APR ÷ 12. Average card rate on accounts that pay interest: 22.36% (Federal Reserve, Q3 2026). Buy now, pay later is shown with no fees: a missed payment can add late fees. Not financial advice.</p>
+    </article>
+  </section>
+
   <section class="video">
     <div><b>See the math explained, step by step</b><p>Animated videos with real numbers. New ones every week.</p></div>
     <a class="btn yt" href="https://www.youtube.com/@NapkinMillions" target="_blank" rel="noopener">▶ Watch on YouTube</a>
@@ -658,6 +687,51 @@ function costco() {
   OUT.costco = { head: 'MY MEMBERSHIP, PER YEAR', big: (net >= 0 ? '+' : '−') + usd(Math.abs(net)), good: net >= 0, lines: [`Spend ${usd(spend / 12)}/mo, ${Math.round(sv * 100)}% cheaper`, `Extras: ${usd(extras)} a year`, `Better fit: ${better}`], text: `My ${exec ? 'Executive' : 'Gold Star'} membership: ${(net >= 0 ? '+' : '−') + usd(Math.abs(net))} a year after the fee and the extras.` };
 }
 
+function blackfriday() {
+  const sale = val('bf-sale', 1000), was = Math.max(val('bf-was', sale), sale), lowRaw = parseFloat($('bf-low').value), low = Number.isFinite(lowRaw) && lowRaw > 0 ? lowRaw : null;
+  const pay = $('bf-pay').value, apr = +$('bf-apr').value / 100, fx = val('bf-fixed', 100);
+  $('bf-apr-o').textContent = (Math.round(+$('bf-apr').value * 10) / 10) + '%';
+  $('bf-fixed-q').hidden = pay !== 'fixed'; $('bf-apr-q').hidden = pay === 'full' || pay === 'bnpl';
+  let total = sale, m = 0, never = false; const pts = [[0, 0]], r = apr / 12;
+  if (pay === 'min' || pay === 'fixed') {
+    let b = sale, paid = 0;
+    while (b > 0.005 && m < 600) {
+      const i = b * r; let p = pay === 'min' ? Math.max(i + 0.01 * b, 25) : fx;
+      if (p <= i + 0.005) { never = true; break; }
+      p = Math.min(p, b + i); b = b + i - p; paid += p; m++; pts.push([m, paid]);
+    }
+    total = never ? Infinity : paid;
+  } else if (pay === 'bnpl') { m = 2; pts.push([1, sale / 2], [2, sale]); }
+  else { m = 0; pts.push([1, sale]); }
+  const tag = was - sale, tagPct = was > 0 ? tag / was : 0;
+  $('bf-tag').textContent = usd(tag) + (tag > 0 ? ` (${Math.round(tagPct * 100)}%)` : '');
+  const yrs = Math.floor(m / 12), mo = m % 12, tStr = pay === 'full' ? 'today' : pay === 'bnpl' ? '6 weeks' : never ? 'never' : (yrs ? `${yrs} yr${yrs > 1 ? 's' : ''} ` : '') + (mo ? `${mo} mo` : '');
+  $('bf-time').textContent = tStr.trim();
+  if (never) {
+    $('bf-big').textContent = '∞'; $('bf-big').className = 'hero-num loss'; $('bf-int').textContent = 'forever';
+    $('bf-say').innerHTML = `At <b>${usd(fx)}</b> a month you only cover the interest, so the balance never goes down. Pay more than <b>${usd(sale * r + 1)}</b> a month, or don't finance it.`;
+    $('bf-vs').textContent = '—'; chart($('bf-chart'), { x0: 0, x1: 12, xt: ticks(0, 12), ymax: was * 1.2, series: [{ d: [[0, was], [12, was]], c: '--muted' }] });
+    OUT.blackfriday = { head: 'WHAT MY DEAL REALLY COSTS', big: 'NEVER PAID OFF', good: false, lines: [`Tag: ${usd(was)}, now ${usd(sale)}`, `Paying ${usd(fx)}/mo at ${(apr * 100).toFixed(1)}%`, 'The interest eats every payment'], text: `My Black Friday "deal": paying ${usd(fx)} a month, it never gets paid off.` };
+    return;
+  }
+  const interest = total - sale, extra = total - was, real = was > 0 ? (was - total) / was : 0;
+  $('bf-big').textContent = usd(total); $('bf-big').className = 'hero-num' + (total > was ? ' loss' : '');
+  $('bf-int').textContent = usd(interest);
+  if (low) { const d = sale - low; $('bf-vs').textContent = d > 0 ? '+' + usd(d) + ' more' : d < 0 ? usd(-d) + ' less' : 'same'; $('bf-vs').className = 'v ' + (d > 0 ? 'loss' : 'good'); }
+  else { $('bf-vs').textContent = 'check a tracker'; $('bf-vs').className = 'v'; }
+  let say;
+  if (total > was) say = `The tag says <b>${Math.round(tagPct * 100)}% off</b>. Paying like this, you'll pay <b>${usd(total)}</b>: that's <b>${usd(extra)} more</b> than the full "was" price. The discount turned into <b>${Math.round(-real * 100)}% extra</b>.`;
+  else if (interest > 1) say = `The tag says <b>${usd(tag)}</b> off, but interest takes back <b>${usd(interest)}</b>. Your real discount is <b>${usd(was - total)}</b> (${Math.round(real * 100)}%), not ${Math.round(tagPct * 100)}%.`;
+  else say = `Paid in full, the deal is <b>${usd(sale)}</b>${tag > 0 ? `, ${usd(tag)} under the tag` : ''}.`;
+  if (low && sale > low) say += ` But this year it already sold for <b>${usd(low)}</b>. The real deal was <b>${usd(sale - low)}</b> cheaper.`;
+  else if (low && sale <= low) say += ' And it\'s at its lowest price of the year. If it was on your list, that\'s a real deal.';
+  else if (!low) say += ' Check the price history: most "deals" were the same or cheaper on another day.';
+  $('bf-say').innerHTML = say;
+  const x1 = Math.max(2, m);
+  chart($('bf-chart'), { x0: 0, x1, xt: ticks(0, x1), xs: x1 > 24 ? '' : '', ymax: Math.max(total, was) * 1.12, series: [{ d: pts, c: '--loss', fill: true }, { d: [[0, was], [x1, was]], c: '--muted' }] });
+  OUT.blackfriday = { head: 'WHAT MY DEAL REALLY COSTS', big: usd(total), good: total <= was, lines: [`Tag: ${usd(was)}, now ${usd(sale)}`, interest > 1 ? `Interest: ${usd(interest)} over ${tStr.trim()}` : 'Paid in full', total > was ? `${usd(extra)} MORE than full price` : `Real discount: ${Math.round(real * 100)}%`], text: total > was ? `My "${Math.round(tagPct * 100)}% off" Black Friday deal will really cost me ${usd(total)}: ${usd(extra)} more than the full price.` : `My Black Friday deal really costs ${usd(total)}, a real discount of ${Math.round(real * 100)}%.` };
+}
+
 let GOAL = 1000000;
 function million() {
   const age = +$('m-age').value; let ret = +$('m-ret').value; if (ret <= age + 1) { ret = age + 2; $('m-ret').value = ret; }
@@ -672,7 +746,7 @@ function million() {
   OUT.million = { head: `MY PATH TO ${short(GOAL)}`, big: usd(n) + '/mo', good: true, lines: [`from ${age} to ${ret}`, `≈ ${usd2(n * 12 / 365)} a day`, yrs > 5 ? `Wait 5 years: ${usd(late)}/mo` : ''], text: `To reach ${usd(GOAL)} by ${ret}, I need to invest ${usd(n)} a month starting at ${age}.` };
 }
 
-const V = { future, twins, waiting, habit, million, rent: rentbuy, car, lottery, salary, costco };
+const V = { future, twins, waiting, habit, million, rent: rentbuy, car, lottery, salary, costco, blackfriday };
 for (const k in V) document.querySelectorAll(`#v-${k} input, #v-${k} select`).forEach(el => el.addEventListener('input', V[k]));
 document.querySelectorAll('.chips[data-for]').forEach(c => c.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; $(c.dataset.for).value = b.dataset.v; $(c.dataset.for).dispatchEvent(new Event('input')); }));
 $('h-chips').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; $('h-amt').value = b.dataset.a; $('h-per').value = b.dataset.p; habit(); });
